@@ -1,0 +1,144 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+
+int main()
+{
+
+	glfwInit(); // initialize glfw, so we can use it to create a window and handle input
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL in 10 Minutes", NULL, NULL);
+	// make a window with width 800, height 600, title "OpenGL in 10 Minutes"
+
+    glfwMakeContextCurrent(window);
+	//what window are we going to write to? the one we just made.
+
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress); // tell glad to get all our functions ready
+
+    glViewport(0, 0, 800, 600);
+
+    unsigned int VBO; // blank sheet of paper
+    glGenBuffers(1, &VBO); // OpenGL, make a blank form to use on this paper
+
+    //points of a triangle, just data for later
+    float vertices[] = {
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f,
+     0.0f,  0.5f, 0.0f
+    };
+
+    //handing OpenGL the VBO form, and telling it what kind of form
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    //okay now write to the form i gave you
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 9, vertices, GL_STATIC_DRAW);
+    //           ^ type of buffer, ^ size of data,   ^ what data, ^ how often is it changed
+    //                                (9 floats)                     (STATIC cuz no change)  
+
+
+
+
+
+
+
+    const char* vertexShaderSource = "#version 330 core\n" // our shader code, 1 big string
+        "layout (location = 0) in vec3 aPos;\n"
+        "void main()\n"
+        "{\n"
+        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+        "}\0";
+
+    unsigned int vertexShader; // blank sheet of paper
+    vertexShader = glCreateShader(GL_VERTEX_SHADER); // make a blank shader form
+    // FOR SOME REASON THIS ONE WE JUST SET EQUAL
+
+    //              V form       V how many strings  V where the code is 
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); //what do we fill the form with
+    glCompileShader(vertexShader); // okay we've given you all the info, now sign the form
+
+
+
+
+
+    
+
+    const char* fragmentShaderSource = "#version 330 core\n" // our shader code, 1 big string, again
+        "out vec4 FragColor;\n"
+        "void main()\n"
+        "{\n"
+        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "}\n\0";
+
+	unsigned int fragmentShader; // blank sheet of paper
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER); // make a blank shader form
+
+	//              V form       V how many strings  V where the code is
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL); //what do we fill the form with
+	glCompileShader(fragmentShader); // okay we've given you all the info, now sign the form
+
+
+
+
+
+
+    unsigned int shaderProgram; // blank sheet
+    shaderProgram = glCreateProgram(); // make it a shader program form
+
+	//give the shader program the vertex and fragment shader forms
+	// link them together to make a full shader program from the vertex and fragment shader forms
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    // dont need these anymore since we have the shader program.
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+
+    unsigned int VAO; // blank sheet of paper
+    glGenVertexArrays(1, &VAO); // make a folder out of this paper 
+    glBindVertexArray(VAO); // okay now were gonna use this folder to put stuff in
+    //this remembers whatever VBO is currently bound and vertexAtrribPointer settings.
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO); // binding the VBO, this "puts it in the folder"
+    //(technically it was already bound so we didnt have to bind it again)
+
+	//how should our shaders interpret the VBO?
+	//doing this while VAO is bound also "puts it in the folder"
+    glVertexAttribPointer(
+		0, // location = 0 in the vertex shader, so basically where in the shader the data goes
+		3, // how many values for each vertex for this location? (x,y,z) so 3
+		GL_FLOAT, // what type of data is it? floats
+		GL_FALSE, // do we want the data to be normalized? no
+        3 * sizeof(float), // total size of data for ALL locations.
+        nullptr); // where does the data start, 
+
+    glEnableVertexAttribArray(0); // enabling location 0
+
+    glBindVertexArray(0);
+
+
+	//while the window shouldnt close, keep doing this loop.
+    while (!glfwWindowShouldClose(window))
+    {
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // set color buffer bit
+		glClear(GL_COLOR_BUFFER_BIT); // clear the screen with the color we just set
+
+        glBindVertexArray(VAO); // take out our folder with our VBO and attribute settings
+        glUseProgram(shaderProgram); // use the shader program we made
+
+        glDrawArrays(GL_TRIANGLES, 0, 3); 
+        //interpret data as triangles, vertices starting at 0 and going to 3
+                        
+        //swap our buffers to update
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+	//all done, close the window and end the program
+    glfwTerminate();
+    return 0;
+}
